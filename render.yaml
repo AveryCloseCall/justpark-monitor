@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: justpark-monitor
+    env: python
+    pythonVersion: "3.12.3"
+    buildCommand: pip install -r requirements.txt && playwright install chromium
+    startCommand: python server.py
+    envVars:
+      - key: JUSTPARK_EMAIL
+        sync: false
+      - key: JUSTPARK_PASSWORD
+        sync: false
