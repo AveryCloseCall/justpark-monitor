@@ -13,10 +13,10 @@ coordinates with the scraper to get you an answer.
 import json
 import logging
 import threading
-from datetime import datetime, timezone
+import time
+from datetime import datetime
 from pathlib import Path
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, render_template_string
 
 from scraper import check_booking, STATUS_FILE
@@ -304,16 +304,18 @@ def status_api():
     return jsonify({**status, "ready": ready})
 
 
-if __name__ == "__main__":
-    # Start the background scheduler for automatic 15-minute checks
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(run_check, "interval", minutes=15, id="auto_check")
-    scheduler.start()
-    log.info("Scheduler started — will check every 15 minutes.")
+def background_loop():
+    """Runs forever in the background, checking every 15 minutes."""
+    while True:
+        run_check()
+        time.sleep(15 * 60)  # Wait 15 minutes before checking again
 
-    # Run an immediate check on startup so there's something to show
-    log.info("Running initial check...")
-    threading.Thread(target=run_check, daemon=True).start()
+
+if __name__ == "__main__":
+    # Start the background loop in a separate thread
+    thread = threading.Thread(target=background_loop, daemon=True)
+    thread.start()
+    log.info("Background checker started — will check every 15 minutes.")
 
     # Start the web server
     app.run(host="0.0.0.0", port=8080)
